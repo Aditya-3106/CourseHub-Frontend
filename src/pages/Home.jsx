@@ -1,169 +1,133 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import api from '../api/axios';
-import { Play, Code, Zap, Trophy, ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
-
-function CourseCard({ course }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card overflow-hidden group flex flex-col hover:border-indigo-500/30 transition-colors"
-    >
-      <div className="aspect-video relative overflow-hidden border-b border-zinc-800/50 bg-zinc-800">
-        {course.thumbnail_url ? (
-          <img
-            src={course.thumbnail_url}
-            alt={course.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Code className="w-10 h-10 text-zinc-600" />
-          </div>
-        )}
-      </div>
-      <div className="p-5 flex-1 flex flex-col">
-        <h3 className="font-bold text-white mb-2 line-clamp-2 leading-snug">{course.title}</h3>
-        {course.description && (
-          <p className="text-sm text-zinc-400 line-clamp-2 mb-4">{course.description}</p>
-        )}
-        <div className="mt-auto flex items-center justify-between">
-          <span className="text-lg font-bold text-indigo-400">${course.price}</span>
-          <Link
-            to={`/course/${course.id}`}
-            className="text-sm bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            View Course
-          </Link>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
+import { CourseCardSkeleton } from '../components/SkeletonLoader';
+import { ArrowRight, Code, Terminal, Zap } from 'lucide-react';
 
 export default function Home() {
   const [courses, setCourses] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, hasNext: false, hasPrev: false });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
 
-  const fetchCourses = async (page = 1) => {
-    setLoading(true);
-    setError('');
-    try {
-      // GET /api/course?page=N&limit=9 → { success, data: { courses, pagination } }
-      const res = await api.get('/course', { params: { page, limit: 9 } });
-      setCourses(res.data.data.courses);
-      setPagination(res.data.data.pagination);
-    } catch (err) {
-      setError('Failed to load courses. Is the backend running?');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchCourses(1); }, []);
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await api.get('/course');
+        setCourses(res.data.data.courses || []);
+      } catch (err) {
+        setError('Failed to load courses. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   return (
-    <div className="min-h-screen">
-      {/* Hero */}
-      <div className="relative overflow-hidden pt-24 pb-20">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] opacity-20 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 blur-[100px] rounded-full" />
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center max-w-3xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
-              Master Modern Web
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Development</span>
+    <div className="min-h-screen pt-16 bg-zinc-950">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden py-20 lg:py-32">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-zinc-950 to-zinc-950"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto">
+            <h1 className="text-5xl lg:text-7xl font-extrabold text-white tracking-tight mb-6 leading-tight">
+              Master coding with <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">100xdevs.clone</span>
             </h1>
-            <p className="text-xl text-zinc-400 mb-10 leading-relaxed">
-              Premium, distraction-free courses built for developers. Real code. Real projects.
+            <p className="text-lg lg:text-xl text-zinc-400 mb-10">
+              The premium, developer-centric platform to learn building production-ready applications. Skip the basics, build the real deal.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/signup" className="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-lg transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] flex items-center justify-center gap-2">
-                <Play className="w-5 h-5 fill-current" />
-                Start Learning Free
-              </Link>
-              <Link to="/login" className="w-full sm:w-auto px-8 py-4 glass-card hover:bg-zinc-800/50 text-white rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2">
-                Log In
-              </Link>
+              <a href="#courses" className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-lg transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] flex items-center gap-2">
+                Explore Courses <ArrowRight className="w-5 h-5" />
+              </a>
             </div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid md:grid-cols-3 gap-6 mb-20">
-          {[
-            { icon: <Code className="w-7 h-7 text-indigo-400" />, title: 'Code-First Approach', desc: 'Less theory, more building. Every lesson ships real, runnable code.' },
-            { icon: <Zap className="w-7 h-7 text-indigo-400" />, title: 'Fast & Distraction-Free', desc: 'Our custom player is built specifically for developers. No fluff.' },
-            { icon: <Trophy className="w-7 h-7 text-indigo-400" />, title: 'Verified Certificates', desc: 'Showcase your skills with verified completion certificates.' },
-          ].map((f, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="glass-card p-7">
-              <div className="bg-zinc-800/50 w-14 h-14 rounded-xl flex items-center justify-center mb-5">{f.icon}</div>
-              <h3 className="text-lg font-bold text-white mb-2">{f.title}</h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">{f.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Courses Grid */}
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">Browse Courses</h2>
-        </div>
-
-        {loading && (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
           </div>
-        )}
-
-        {error && (
-          <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-5 py-4 text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && courses.length === 0 && (
-          <div className="text-center py-24 text-zinc-500">No published courses yet. Check back soon!</div>
-        )}
-
-        {!loading && !error && courses.length > 0 && (
-          <>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => <CourseCard key={course.id} course={course} />)}
+          
+          <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto text-zinc-400">
+            <div className="glass-card p-6 flex flex-col items-center text-center">
+              <Terminal className="w-10 h-10 text-indigo-400 mb-4" />
+              <h3 className="text-white font-semibold text-lg mb-2">Modern Tech Stack</h3>
+              <p className="text-sm">Learn React, Node.js, Next.js, and more.</p>
             </div>
+            <div className="glass-card p-6 flex flex-col items-center text-center">
+              <Code className="w-10 h-10 text-cyan-400 mb-4" />
+              <h3 className="text-white font-semibold text-lg mb-2">Project Based</h3>
+              <p className="text-sm">Build real-world apps, not just to-do lists.</p>
+            </div>
+            <div className="glass-card p-6 flex flex-col items-center text-center">
+              <Zap className="w-10 h-10 text-emerald-400 mb-4" />
+              <h3 className="text-white font-semibold text-lg mb-2">Fast Paced</h3>
+              <p className="text-sm">Optimized for developers who want to move fast.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-12">
-                <button
-                  onClick={() => fetchCourses(pagination.page - 1)}
-                  disabled={!pagination.hasPrev}
-                  className="flex items-center gap-1 px-4 py-2 glass-card hover:bg-zinc-800/50 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-lg text-sm"
+      {/* Courses Section */}
+      <section id="courses" className="py-20 bg-zinc-950 border-t border-zinc-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-12">
+            <h2 className="text-3xl font-bold text-white tracking-tight">Available Courses</h2>
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg text-center">
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => <CourseCardSkeleton key={i} />)
+            ) : courses.length > 0 ? (
+              courses.map((course) => (
+                <Link
+                  key={course._id}
+                  to={`/course/${course._id}`}
+                  className="group bg-zinc-900/40 rounded-xl overflow-hidden border border-zinc-800/50 hover:border-indigo-500/50 transition-all hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(79,70,229,0.15)] flex flex-col"
                 >
-                  <ChevronLeft className="w-4 h-4" /> Previous
-                </button>
-                <span className="text-zinc-400 text-sm">
-                  Page {pagination.page} of {pagination.totalPages}
-                </span>
-                <button
-                  onClick={() => fetchCourses(pagination.page + 1)}
-                  disabled={!pagination.hasNext}
-                  className="flex items-center gap-1 px-4 py-2 glass-card hover:bg-zinc-800/50 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors rounded-lg text-sm"
-                >
-                  Next <ChevronRight className="w-4 h-4" />
-                </button>
+                  <div className="relative aspect-video overflow-hidden bg-zinc-900">
+                    {course.thumbnail ? (
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                        <Code className="w-12 h-12" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent opacity-60"></div>
+                  </div>
+                  
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors line-clamp-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-zinc-400 text-sm mb-6 line-clamp-2 flex-1">
+                      {course.description || "A premium course to level up your development skills."}
+                    </p>
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-zinc-800/50">
+                      <span className="text-2xl font-bold text-white">
+                        ${course.price}
+                      </span>
+                      <span className="text-indigo-400 font-medium text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        View Details <ArrowRight className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-20 text-zinc-500">
+                <p className="text-lg">No courses available at the moment.</p>
               </div>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

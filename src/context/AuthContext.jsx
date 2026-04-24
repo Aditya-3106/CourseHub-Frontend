@@ -10,7 +10,6 @@ export function AuthProvider({ children }) {
     token: null,
     userId: null,
     role: null,
-    creatorId: null,
     isAuthenticated: false,
   });
   const [loading, setLoading] = useState(true);
@@ -27,7 +26,6 @@ export function AuthProvider({ children }) {
             token,
             userId: decoded.userId,
             role: decoded.role,
-            creatorId: decoded.creatorId || null,
             isAuthenticated: true,
           });
         } else {
@@ -48,15 +46,10 @@ export function AuthProvider({ children }) {
       token,
       userId: decoded.userId,
       role: decoded.role,
-      creatorId: decoded.creatorId || null,
       isAuthenticated: true,
     });
   };
 
-  // After "Become a Creator" — update creatorId in state
-  const setCreatorId = (creatorId) => {
-    setAuthState((prev) => ({ ...prev, creatorId }));
-  };
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -64,13 +57,12 @@ export function AuthProvider({ children }) {
       token: null,
       userId: null,
       role: null,
-      creatorId: null,
       isAuthenticated: false,
     });
   };
 
   return (
-    <AuthContext.Provider value={{ ...authState, loading, login, logout, setCreatorId }}>
+    <AuthContext.Provider value={{ ...authState, loading, login, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );

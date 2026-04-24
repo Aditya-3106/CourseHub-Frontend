@@ -1,77 +1,89 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { Toaster } from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
+
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
 
-// Pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import CourseLanding from './pages/CourseLanding';
-import StudentDashboard from './pages/StudentDashboard';
-import CoursePlayer from './pages/CoursePlayer';
-import BecomeCreator from './pages/BecomeCreator';
-import CreatorDashboard from './pages/CreatorDashboard';
-import CourseEditor from './pages/CourseEditor';
+// Lazy load pages for code splitting
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Login'));
+const Signup = lazy(() => import('./pages/Signup'));
+const CourseLanding = lazy(() => import('./pages/CourseLanding'));
+const MyLearning = lazy(() => import('./pages/MyLearning'));
+const CoursePlayer = lazy(() => import('./pages/CoursePlayer'));
 
-// ─── Protected Route Guards ──────────────────────────────────────────────────
-function RequireAuth({ children }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-}
-
-function RequireCreator({ children }) {
-  const { isAuthenticated, creatorId } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!creatorId) return <Navigate to="/become-creator" replace />;
-  return children;
-}
-
+// Helper to redirect authenticated users away from login/signup
 function RedirectIfAuthed({ children }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return null;
+  return isAuthenticated ? <Navigate to="/my-learning" replace /> : children;
 }
 
-// ─── App Shell ───────────────────────────────────────────────────────────────
+// Global Loading Fallback for Suspense
+function GlobalLoader() {
+  return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+    </div>
+  );
+}
+
 function AppContent() {
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-950">
+    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans">
       <Navbar />
       <main className="flex-grow">
-        <Routes>
-          {/* Public */}
-          <Route path="/" element={<Home />} />
-          <Route path="/course/:courseId" element={<CourseLanding />} />
+        <Suspense fallback={<GlobalLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/course/:id" element={<CourseLanding />} />
 
-          {/* Auth — redirect if already logged in */}
-          <Route path="/login"  element={<RedirectIfAuthed><Login /></RedirectIfAuthed>} />
-          <Route path="/signup" element={<RedirectIfAuthed><Signup /></RedirectIfAuthed>} />
+            {/* Auth Routes */}
+            <Route path="/login" element={<RedirectIfAuthed><Login /></RedirectIfAuthed>} />
+            <Route path="/signup" element={<RedirectIfAuthed><Signup /></RedirectIfAuthed>} />
 
-          {/* Authenticated student routes */}
-          <Route path="/dashboard" element={<RequireAuth><StudentDashboard /></RequireAuth>} />
-          <Route path="/play/:courseId" element={<RequireAuth><CoursePlayer /></RequireAuth>} />
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/my-learning" element={<MyLearning />} />
+              <Route path="/play/:id" element={<CoursePlayer />} />
+            </Route>
 
-          {/* Creator onboarding */}
-          <Route path="/become-creator" element={<RequireAuth><BecomeCreator /></RequireAuth>} />
-
-          {/* Creator-only routes */}
-          <Route path="/creator" element={<RequireCreator><CreatorDashboard /></RequireCreator>} />
-          <Route path="/creator/course/:courseId" element={<RequireCreator><CourseEditor /></RequireCreator>} />
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
     </div>
   );
 }
 
 export default function App() {
+  // Use a placeholder or environment variable for the Google Client ID
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+
   return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <Router>
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              className: '',
+              style: {
+                background: '#18181b', // zinc-900
+                color: '#f4f4f5', // zinc-50
+                border: '1px solid #27272a', // zinc-800
+              },
+            }}
+          />
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
