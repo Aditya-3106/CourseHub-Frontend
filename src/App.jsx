@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('./pages/Home'));
@@ -63,25 +64,25 @@ function AppContent() {
 }
 
 export default function App() {
-  // Use a placeholder or environment variable for the Google Client ID
-  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <Router>
-          <Toaster 
-            position="top-right" 
+          <Toaster
+            position="top-right"
             toastOptions={{
-              className: '',
               style: {
-                background: '#18181b', // zinc-900
-                color: '#f4f4f5', // zinc-50
-                border: '1px solid #27272a', // zinc-800
+                background: '#18181b',
+                color: '#f4f4f5',
+                border: '1px solid #27272a',
               },
             }}
           />
-          <AppContent />
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </Router>
       </AuthProvider>
     </GoogleOAuthProvider>

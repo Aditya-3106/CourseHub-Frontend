@@ -1,7 +1,8 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://coursehub-backend-system-production.up.railway.app/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -19,14 +20,21 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle 401 globally — clear token and redirect to home
+// Handle errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+
+    if (status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/';
+      window.location.href = '/login';
     }
+
+    if (status === 429) {
+      toast.error('You\'re doing that too fast. Please slow down and try again.');
+    }
+
     return Promise.reject(error);
   }
 );
